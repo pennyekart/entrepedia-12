@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, Mail, Lock, User, ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
+import { Checkbox } from '@/components/ui/checkbox';
 const emailSchema = z.string().email('Please enter a valid email');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 const nameSchema = z.string().min(2, 'Name must be at least 2 characters');
@@ -22,6 +23,7 @@ export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isOver18, setIsOver18] = useState(false);
   const {
     user,
     signInWithGoogle,
@@ -51,6 +53,9 @@ export default function Auth() {
       const nameResult = nameSchema.safeParse(fullName);
       if (!nameResult.success) {
         newErrors.fullName = nameResult.error.errors[0].message;
+      }
+      if (!isOver18) {
+        newErrors.age = 'You must confirm you are 18 years or older';
       }
     }
     setErrors(newErrors);
@@ -176,7 +181,26 @@ export default function Auth() {
                   {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
                 </div>
 
-                <Button type="submit" className="w-full h-12 gradient-primary text-white font-semibold" disabled={loading}>
+                {mode === 'signup' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="age-verification" 
+                        checked={isOver18}
+                        onCheckedChange={(checked) => setIsOver18(checked === true)}
+                      />
+                      <Label 
+                        htmlFor="age-verification" 
+                        className="text-sm font-normal cursor-pointer"
+                      >
+                        I confirm that I am 18 years of age or older
+                      </Label>
+                    </div>
+                    {errors.age && <p className="text-sm text-destructive">{errors.age}</p>}
+                  </div>
+                )}
+
+                <Button type="submit" className="w-full h-12 gradient-primary text-white font-semibold" disabled={loading || (mode === 'signup' && !isOver18)}>
                   {loading ? 'Please wait...' : mode === 'signin' ? 'Sign In' : 'Create Account'}
                 </Button>
               </form>

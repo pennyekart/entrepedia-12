@@ -43,7 +43,7 @@ export default function Home() {
   const navigate = useNavigate();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('businesses');
+  const [activeTab, setActiveTab] = useState('posts');
 
   useEffect(() => {
     if (!authLoading && activeTab === 'posts') {
@@ -153,27 +153,19 @@ export default function Home() {
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="w-full grid grid-cols-3">
-                <TabsTrigger value="businesses" className="gap-1">
-                  <Building2 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Businesses</span>
+                <TabsTrigger value="posts" className="gap-1">
+                  <FileText className="h-4 w-4" />
+                  <span className="hidden sm:inline">Posts</span>
                 </TabsTrigger>
                 <TabsTrigger value="communities" className="gap-1">
                   <Users className="h-4 w-4" />
                   <span className="hidden sm:inline">Communities</span>
                 </TabsTrigger>
-                <TabsTrigger value="posts" className="gap-1">
-                  <FileText className="h-4 w-4" />
-                  <span className="hidden sm:inline">Posts</span>
+                <TabsTrigger value="businesses" className="gap-1">
+                  <Building2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Businesses</span>
                 </TabsTrigger>
               </TabsList>
-
-              <TabsContent value="businesses" className="mt-4">
-                <BusinessFeed />
-              </TabsContent>
-
-              <TabsContent value="communities" className="mt-4">
-                <CommunityFeed />
-              </TabsContent>
 
               <TabsContent value="posts" className="mt-4 space-y-4">
                 {user && <CreatePostCard onPostCreated={handlePostCreated} />}
@@ -194,6 +186,14 @@ export default function Home() {
                     </CardContent>
                   </Card>
                 )}
+              </TabsContent>
+
+              <TabsContent value="communities" className="mt-4">
+                <CommunityFeed />
+              </TabsContent>
+
+              <TabsContent value="businesses" className="mt-4">
+                <BusinessFeed />
               </TabsContent>
             </Tabs>
           </div>
