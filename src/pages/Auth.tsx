@@ -128,10 +128,12 @@ export default function Auth() {
 
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-4 shadow-glow">
-            <span className="text-white font-bold text-3xl">സം</span>
-          </div>
-          <h1 className="text-3xl font-bold text-foreground">സംരംഭക.com</h1>
+          <img 
+            src="/assets/logo.jpeg" 
+            alt="Sam Logo" 
+            className="h-20 w-auto rounded-2xl mx-auto mb-4 shadow-glow"
+          />
+          <h1 className="text-3xl font-bold text-foreground">Sam</h1>
           <p className="text-muted-foreground mt-2">Connect. Build. Grow.</p>
         </div>
 

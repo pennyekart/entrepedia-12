@@ -54,12 +54,11 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center">
-              <span className="text-white font-bold text-lg">സം</span>
-            </div>
-            <span className="hidden sm:block font-bold text-xl text-foreground">
-              സംരംഭക
-            </span>
+            <img 
+              src="/assets/logo.jpeg" 
+              alt="Sam Logo" 
+              className="h-9 w-auto rounded-lg"
+            />
           </Link>
 
           {/* Search - Hidden on mobile */}
