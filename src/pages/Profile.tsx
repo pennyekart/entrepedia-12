@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { VerifiedBadge } from '@/components/ui/verified-badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -18,7 +19,8 @@ import {
   UserPlus, 
   UserMinus,
   Settings,
-  Link as LinkIcon
+  Link as LinkIcon,
+  CheckCircle
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -31,6 +33,7 @@ interface ProfileData {
   location: string | null;
   created_at: string | null;
   is_online: boolean | null;
+  is_verified?: boolean;
 }
 
 interface Post {
@@ -47,6 +50,7 @@ interface Post {
     full_name: string | null;
     username: string | null;
     avatar_url: string | null;
+    is_verified?: boolean;
   } | null;
   businesses: {
     id: string;
@@ -265,8 +269,9 @@ export default function Profile() {
               <div className="flex-1 sm:pb-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h1 className="text-2xl font-bold text-foreground">
+                    <h1 className="text-2xl font-bold text-foreground flex items-center">
                       {profileData.full_name || 'Anonymous'}
+                      {profileData.is_verified && <VerifiedBadge size="md" />}
                     </h1>
                     <p className="text-muted-foreground">
                       @{profileData.username || 'user'}
@@ -435,8 +440,9 @@ function UserCard({ user }: { user: ProfileData }) {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-foreground truncate">
+            <p className="font-semibold text-foreground truncate flex items-center">
               {user.full_name || 'Anonymous'}
+              {user.is_verified && <VerifiedBadge size="sm" />}
             </p>
             <p className="text-sm text-muted-foreground truncate">
               @{user.username || 'user'}

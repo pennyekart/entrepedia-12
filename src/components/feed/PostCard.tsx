@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { VerifiedBadge } from '@/components/ui/verified-badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -32,6 +33,7 @@ interface PostCardProps {
       full_name: string | null;
       username: string | null;
       avatar_url: string | null;
+      is_verified?: boolean;
     } | null;
     businesses: {
       id: string;
@@ -113,8 +115,9 @@ export function PostCard({ post, onUpdate }: PostCardProps) {
               </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-semibold text-foreground hover:text-primary transition-colors">
+              <p className="font-semibold text-foreground hover:text-primary transition-colors flex items-center">
                 {displayName}
+                {post.profiles?.is_verified && <VerifiedBadge size="sm" />}
               </p>
               <p className="text-sm text-muted-foreground">
                 {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
