@@ -59,7 +59,7 @@ export function Navbar() {
               alt="സംരംഭക.com Logo" 
               className="h-9 w-auto rounded-lg"
             />
-            <span className="font-bold text-lg hidden sm:inline">
+            <span className="font-bold text-sm sm:text-lg">
               <span className="text-primary">സംരംഭക</span>
               <span className="text-muted-foreground">.com</span>
             </span>
