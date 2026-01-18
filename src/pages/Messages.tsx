@@ -90,6 +90,8 @@ export default function Messages() {
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<string | null>(null);
+  const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
+  const [deleteMessageDialogOpen, setDeleteMessageDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -398,6 +400,39 @@ export default function Messages() {
     setDeleteDialogOpen(true);
   };
 
+  // Delete individual message
+  const handleDeleteMessage = async () => {
+    if (!messageToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .delete()
+        .eq('id', messageToDelete);
+
+      if (error) throw error;
+
+      // Update local state
+      setMessages(prev => prev.filter(m => m.id !== messageToDelete));
+      
+      // Refresh conversations to update last_message
+      fetchConversations();
+
+      toast({ title: 'Message deleted' });
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      toast({ title: 'Error deleting message', variant: 'destructive' });
+    } finally {
+      setDeleteMessageDialogOpen(false);
+      setMessageToDelete(null);
+    }
+  };
+
+  const openDeleteMessageDialog = (msgId: string) => {
+    setMessageToDelete(msgId);
+    setDeleteMessageDialogOpen(true);
+  };
+
   if (loading) {
     return (
       <MainLayout>
@@ -611,32 +646,63 @@ export default function Messages() {
                   {/* Messages */}
                   <ScrollArea className="flex-1 p-4">
                     <div className="space-y-4">
-                      {messages.map((msg) => (
-                        <div
-                          key={msg.id}
-                          className={cn(
-                            "flex",
-                            msg.sender_id === user?.id ? "justify-end" : "justify-start"
-                          )}
-                        >
+                      {messages.map((msg) => {
+                        const isOwnMessage = msg.sender_id === user?.id;
+                        return (
                           <div
+                            key={msg.id}
                             className={cn(
-                              "max-w-[70%] rounded-2xl px-4 py-2",
-                              msg.sender_id === user?.id
-                                ? "gradient-primary text-white rounded-br-md"
-                                : "bg-muted text-foreground rounded-bl-md"
+                              "flex group",
+                              isOwnMessage ? "justify-end" : "justify-start"
                             )}
                           >
-                            <p>{msg.content}</p>
-                            <p className={cn(
-                              "text-xs mt-1",
-                              msg.sender_id === user?.id ? "text-white/70" : "text-muted-foreground"
+                            <div className={cn(
+                              "flex items-center gap-1",
+                              isOwnMessage ? "flex-row" : "flex-row-reverse"
                             )}>
-                              {msg.created_at && formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
-                            </p>
+                              {/* Delete button - only for own messages */}
+                              {isOwnMessage && (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                      <MoreVertical className="h-3 w-3" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                      className="text-destructive focus:text-destructive"
+                                      onClick={() => openDeleteMessageDialog(msg.id)}
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      Delete Message
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
+                              <div
+                                className={cn(
+                                  "max-w-[70%] rounded-2xl px-4 py-2",
+                                  isOwnMessage
+                                    ? "gradient-primary text-white rounded-br-md"
+                                    : "bg-muted text-foreground rounded-bl-md"
+                                )}
+                              >
+                                <p>{msg.content}</p>
+                                <p className={cn(
+                                  "text-xs mt-1",
+                                  isOwnMessage ? "text-white/70" : "text-muted-foreground"
+                                )}>
+                                  {msg.created_at && formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
+                                </p>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                       <div ref={messagesEndRef} />
                     </div>
                   </ScrollArea>
@@ -696,6 +762,27 @@ export default function Messages() {
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteConversation}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Delete Message Confirmation Dialog */}
+        <AlertDialog open={deleteMessageDialogOpen} onOpenChange={setDeleteMessageDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this message?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This message will be permanently deleted. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteMessage}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 Delete
