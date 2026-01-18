@@ -10,7 +10,8 @@ import {
   Building2,
   Sun,
   Moon,
-  Plus
+  Plus,
+  Share2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -176,8 +177,17 @@ export function Navbar() {
                 <Button variant="ghost" onClick={() => navigate('/auth')}>
                   Sign in
                 </Button>
-                <Button className="gradient-primary text-white" onClick={() => navigate('/auth?mode=signup')}>
-                  Get Started
+                <Button 
+                  className="gradient-primary text-white" 
+                  onClick={() => {
+                    const appUrl = window.location.origin;
+                    const message = `🚀 Check out സംരംഭക.com - a platform for entrepreneurs to connect, share ideas and grow together! Join now: ${appUrl}`;
+                    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+                    window.open(whatsappUrl, '_blank');
+                  }}
+                >
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Invite Friends
                 </Button>
               </div>
             )}
