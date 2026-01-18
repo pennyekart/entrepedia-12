@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_activity_logs: {
+        Row: {
+          action: string
+          admin_id: string | null
+          created_at: string | null
+          details: Json | null
+          id: string
+          target_id: string | null
+          target_type: string
+        }
+        Insert: {
+          action: string
+          admin_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type: string
+        }
+        Update: {
+          action?: string
+          admin_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type?: string
+        }
+        Relationships: []
+      }
       business_follows: {
         Row: {
           business_id: string | null
@@ -84,12 +114,15 @@ export type Database = {
       }
       businesses: {
         Row: {
+          approval_status: string | null
           category: Database["public"]["Enums"]["business_category"]
           cover_image_url: string | null
           created_at: string | null
           description: string | null
+          disabled_reason: string | null
           id: string
           instagram_link: string | null
+          is_disabled: boolean | null
           is_featured: boolean | null
           location: string | null
           logo_url: string | null
@@ -100,12 +133,15 @@ export type Database = {
           youtube_link: string | null
         }
         Insert: {
+          approval_status?: string | null
           category?: Database["public"]["Enums"]["business_category"]
           cover_image_url?: string | null
           created_at?: string | null
           description?: string | null
+          disabled_reason?: string | null
           id?: string
           instagram_link?: string | null
+          is_disabled?: boolean | null
           is_featured?: boolean | null
           location?: string | null
           logo_url?: string | null
@@ -116,12 +152,15 @@ export type Database = {
           youtube_link?: string | null
         }
         Update: {
+          approval_status?: string | null
           category?: Database["public"]["Enums"]["business_category"]
           cover_image_url?: string | null
           created_at?: string | null
           description?: string | null
+          disabled_reason?: string | null
           id?: string
           instagram_link?: string | null
+          is_disabled?: boolean | null
           is_featured?: boolean | null
           location?: string | null
           logo_url?: string | null
@@ -190,7 +229,10 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           description: string | null
+          disabled_at: string | null
+          disabled_reason: string | null
           id: string
+          is_disabled: boolean | null
           name: string
           updated_at: string | null
         }
@@ -200,7 +242,10 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          disabled_at?: string | null
+          disabled_reason?: string | null
           id?: string
+          is_disabled?: boolean | null
           name: string
           updated_at?: string | null
         }
@@ -210,7 +255,10 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          disabled_at?: string | null
+          disabled_reason?: string | null
           id?: string
+          is_disabled?: boolean | null
           name?: string
           updated_at?: string | null
         }
@@ -344,6 +392,39 @@ export type Database = {
           },
         ]
       }
+      featured_content: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string | null
+          created_by: string | null
+          end_date: string | null
+          id: string
+          placement: number | null
+          start_date: string | null
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          placement?: number | null
+          start_date?: string | null
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          placement?: number | null
+          start_date?: string | null
+        }
+        Relationships: []
+      }
       follows: {
         Row: {
           created_at: string | null
@@ -463,6 +544,30 @@ export type Database = {
           },
         ]
       }
+      platform_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string | null
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       post_likes: {
         Row: {
           created_at: string | null
@@ -504,10 +609,13 @@ export type Database = {
           business_id: string | null
           content: string | null
           created_at: string | null
+          hidden_at: string | null
+          hidden_reason: string | null
           id: string
           image_url: string | null
           instagram_url: string | null
           is_featured: boolean | null
+          is_hidden: boolean | null
           updated_at: string | null
           user_id: string | null
           youtube_url: string | null
@@ -516,10 +624,13 @@ export type Database = {
           business_id?: string | null
           content?: string | null
           created_at?: string | null
+          hidden_at?: string | null
+          hidden_reason?: string | null
           id?: string
           image_url?: string | null
           instagram_url?: string | null
           is_featured?: boolean | null
+          is_hidden?: boolean | null
           updated_at?: string | null
           user_id?: string | null
           youtube_url?: string | null
@@ -528,10 +639,13 @@ export type Database = {
           business_id?: string | null
           content?: string | null
           created_at?: string | null
+          hidden_at?: string | null
+          hidden_reason?: string | null
           id?: string
           image_url?: string | null
           instagram_url?: string | null
           is_featured?: boolean | null
+          is_hidden?: boolean | null
           updated_at?: string | null
           user_id?: string | null
           youtube_url?: string | null
@@ -557,9 +671,13 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          blocked_at: string | null
+          blocked_by: string | null
+          chat_disabled: boolean | null
           created_at: string | null
           full_name: string | null
           id: string
+          is_blocked: boolean | null
           is_online: boolean | null
           last_seen: string | null
           location: string | null
@@ -570,9 +688,13 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          chat_disabled?: boolean | null
           created_at?: string | null
           full_name?: string | null
           id: string
+          is_blocked?: boolean | null
           is_online?: boolean | null
           last_seen?: string | null
           location?: string | null
@@ -583,15 +705,88 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          chat_disabled?: boolean | null
           created_at?: string | null
           full_name?: string | null
           id?: string
+          is_blocked?: boolean | null
           is_online?: boolean | null
           last_seen?: string | null
           location?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string | null
           username?: string | null
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          action_taken: string | null
+          created_at: string | null
+          description: string | null
+          evidence_urls: string[] | null
+          id: string
+          reason: string
+          reported_id: string
+          reported_type: string
+          reporter_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          created_at?: string | null
+          description?: string | null
+          evidence_urls?: string[] | null
+          id?: string
+          reason: string
+          reported_id: string
+          reported_type: string
+          reporter_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          created_at?: string | null
+          description?: string | null
+          evidence_urls?: string[] | null
+          id?: string
+          reason?: string
+          reported_id?: string
+          reported_type?: string
+          reporter_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["admin_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["admin_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["admin_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -624,6 +819,42 @@ export type Database = {
           },
         ]
       }
+      user_suspensions: {
+        Row: {
+          expires_at: string | null
+          id: string
+          is_permanent: boolean | null
+          lifted_at: string | null
+          lifted_by: string | null
+          reason: string
+          suspended_at: string | null
+          suspended_by: string | null
+          user_id: string
+        }
+        Insert: {
+          expires_at?: string | null
+          id?: string
+          is_permanent?: boolean | null
+          lifted_at?: string | null
+          lifted_by?: string | null
+          reason: string
+          suspended_at?: string | null
+          suspended_by?: string | null
+          user_id: string
+        }
+        Update: {
+          expires_at?: string | null
+          id?: string
+          is_permanent?: boolean | null
+          lifted_at?: string | null
+          lifted_by?: string | null
+          reason?: string
+          suspended_at?: string | null
+          suspended_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -632,6 +863,14 @@ export type Database = {
       get_or_create_conversation: {
         Args: { other_user_id: string }
         Returns: string
+      }
+      has_any_admin_role: { Args: { _user_id: string }; Returns: boolean }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["admin_role"]
+          _user_id: string
+        }
+        Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
       is_business_owner: { Args: { business_uuid: string }; Returns: boolean }
@@ -643,6 +882,7 @@ export type Database = {
       is_following: { Args: { target_user_id: string }; Returns: boolean }
     }
     Enums: {
+      admin_role: "super_admin" | "content_moderator" | "category_manager"
       business_category:
         | "food"
         | "tech"
@@ -782,6 +1022,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      admin_role: ["super_admin", "content_moderator", "category_manager"],
       business_category: [
         "food",
         "tech",

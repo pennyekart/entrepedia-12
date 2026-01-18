@@ -18,6 +18,17 @@ import Create from "./pages/Create";
 import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 
+// Admin pages
+import { AdminRoute } from "./components/admin/AdminRoute";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminBusinesses from "./pages/admin/AdminBusinesses";
+import AdminPosts from "./pages/admin/AdminPosts";
+import AdminCommunities from "./pages/admin/AdminCommunities";
+import AdminReports from "./pages/admin/AdminReports";
+import AdminCategories from "./pages/admin/AdminCategories";
+import AdminChatModeration from "./pages/admin/AdminChatModeration";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -42,6 +53,17 @@ const App = () => (
             <Route path="/settings" element={<Settings />} />
             <Route path="/create" element={<Create />} />
             <Route path="/notifications" element={<Notifications />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+            <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+            <Route path="/admin/businesses" element={<AdminRoute><AdminBusinesses /></AdminRoute>} />
+            <Route path="/admin/posts" element={<AdminRoute requiredRole="content_moderator"><AdminPosts /></AdminRoute>} />
+            <Route path="/admin/communities" element={<AdminRoute><AdminCommunities /></AdminRoute>} />
+            <Route path="/admin/reports" element={<AdminRoute requiredRole="content_moderator"><AdminReports /></AdminRoute>} />
+            <Route path="/admin/categories" element={<AdminRoute requiredRole="category_manager"><AdminCategories /></AdminRoute>} />
+            <Route path="/admin/chat" element={<AdminRoute requiredRole="content_moderator"><AdminChatModeration /></AdminRoute>} />
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
