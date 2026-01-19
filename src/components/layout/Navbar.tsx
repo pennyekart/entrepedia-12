@@ -135,7 +135,7 @@ export function Navbar() {
                       <Avatar className="h-9 w-9">
                         <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || ''} />
                         <AvatarFallback className="gradient-primary text-white">
-                          {profile?.full_name?.charAt(0) || user.email?.charAt(0).toUpperCase()}
+                          {profile?.full_name?.charAt(0) || user.mobile_number?.charAt(0) || 'U'}
                         </AvatarFallback>
                       </Avatar>
                       {profile?.is_verified === true && (

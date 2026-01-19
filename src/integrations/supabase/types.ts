@@ -853,6 +853,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_credentials: {
+        Row: {
+          created_at: string
+          id: string
+          mobile_number: string
+          password_hash: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mobile_number: string
+          password_hash: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mobile_number?: string
+          password_hash?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null

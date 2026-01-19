@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Profile {
@@ -16,9 +15,14 @@ interface Profile {
   created_at: string;
 }
 
+interface User {
+  id: string;
+  mobile_number: string;
+  full_name: string | null;
+}
+
 interface AuthContextType {
   user: User | null;
-  session: Session | null;
   profile: Profile | null;
   loading: boolean;
   isProfileComplete: boolean;
@@ -30,9 +34,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const STORAGE_KEY = 'samrambhak_auth';
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -48,78 +53,98 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Load session from localStorage on mount
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // Defer profile fetch with setTimeout to avoid deadlock
-        if (session?.user) {
-          setTimeout(() => {
-            fetchProfile(session.user.id);
-          }, 0);
-        } else {
-          setProfile(null);
+    const loadSession = async () => {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const { user: storedUser, session_token } = JSON.parse(stored);
+          if (storedUser && session_token) {
+            setUser(storedUser);
+            await fetchProfile(storedUser.id);
+          }
         }
+      } catch (error) {
+        console.error('Failed to load session:', error);
+        localStorage.removeItem(STORAGE_KEY);
+      } finally {
         setLoading(false);
       }
-    );
+    };
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    loadSession();
   }, []);
 
-  // Convert mobile number to a synthetic email for Supabase auth
-  const mobileToEmail = (mobile: string) => `${mobile}@mobile.samrambhak.app`;
-
   const signInWithMobile = async (mobileNumber: string, password: string) => {
-    const email = mobileToEmail(mobileNumber);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error: error as Error | null };
+    try {
+      const response = await supabase.functions.invoke('mobile-auth', {
+        body: {
+          action: 'signin',
+          mobile_number: mobileNumber,
+          password,
+        },
+      });
+
+      if (response.error) {
+        return { error: new Error(response.error.message || 'Sign in failed') };
+      }
+
+      const data = response.data;
+      
+      if (data.error) {
+        return { error: new Error(data.error) };
+      }
+
+      // Store session
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        user: data.user,
+        session_token: data.session_token,
+      }));
+
+      setUser(data.user);
+      await fetchProfile(data.user.id);
+
+      return { error: null };
+    } catch (error: any) {
+      return { error: new Error(error.message || 'Sign in failed') };
+    }
   };
 
   const signUpWithMobile = async (mobileNumber: string, password: string, fullName: string) => {
-    const email = mobileToEmail(mobileNumber);
-    
-    const { error, data } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-        data: {
-          full_name: fullName,
+    try {
+      const response = await supabase.functions.invoke('mobile-auth', {
+        body: {
+          action: 'signup',
           mobile_number: mobileNumber,
-        },
-      },
-    });
-    
-    // Update profile after signup with mobile number
-    if (!error && data.user) {
-      await supabase
-        .from('profiles')
-        .update({ 
-          mobile_number: mobileNumber, 
+          password,
           full_name: fullName,
-          username: mobileNumber, // Use mobile as username initially
-        })
-        .eq('id', data.user.id);
+        },
+      });
+
+      if (response.error) {
+        return { error: new Error(response.error.message || 'Sign up failed') };
+      }
+
+      const data = response.data;
+      
+      if (data.error) {
+        return { error: new Error(data.error) };
+      }
+
+      // Store session
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        user: data.user,
+        session_token: data.session_token,
+      }));
+
+      setUser(data.user);
+      await fetchProfile(data.user.id);
+
+      return { error: null };
+    } catch (error: any) {
+      return { error: new Error(error.message || 'Sign up failed') };
     }
-    
-    return { error: error as Error | null };
   };
 
   const signOut = async () => {
@@ -130,7 +155,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .update({ is_online: false, last_seen: new Date().toISOString() })
         .eq('id', user.id);
     }
-    await supabase.auth.signOut();
+    
+    localStorage.removeItem(STORAGE_KEY);
+    setUser(null);
+    setProfile(null);
   };
 
   const refreshProfile = async () => {
@@ -150,7 +178,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
-        session,
         profile,
         loading,
         isProfileComplete,
