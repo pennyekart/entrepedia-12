@@ -19,6 +19,7 @@ import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 import VerifyEmail from "./pages/VerifyEmail";
 import PostDetail from "./pages/PostDetail";
+import Friends from "./pages/Friends";
 
 // Admin pages
 import { AdminRoute } from "./components/admin/AdminRoute";
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/user/:id" element={<Profile />} />
             <Route path="/explore" element={<Explore />} />
+            <Route path="/friends" element={<Friends />} />
             <Route path="/business/:id" element={<BusinessProfile />} />
             <Route path="/my-businesses" element={<MyBusinesses />} />
             <Route path="/communities" element={<Communities />} />
