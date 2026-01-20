@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { TrendingPosts } from './TrendingPosts';
+import { FriendsSuggestion } from './FriendsSuggestion';
 
 interface SuggestedBusiness {
   id: string;
@@ -169,6 +170,9 @@ export function DiscoverSidebar() {
 
   return (
     <div className="space-y-4">
+      {/* Find Friends */}
+      <FriendsSuggestion />
+
       {/* Trending Posts */}
       <TrendingPosts />
 
