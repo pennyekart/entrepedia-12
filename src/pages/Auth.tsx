@@ -69,6 +69,36 @@ export default function Auth() {
     return cleanName ? `${cleanName}${lastFourDigits}` : '';
   };
 
+  // Password strength calculation
+  const getPasswordStrength = (pwd: string) => {
+    const checks = {
+      minLength: pwd.length >= 6,
+      hasUppercase: /[A-Z]/.test(pwd),
+      hasLowercase: /[a-z]/.test(pwd),
+      hasNumber: /[0-9]/.test(pwd),
+      hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(pwd),
+    };
+    
+    const passedChecks = Object.values(checks).filter(Boolean).length;
+    let strength: 'weak' | 'fair' | 'good' | 'strong' = 'weak';
+    let color = 'bg-destructive';
+    
+    if (passedChecks >= 5) {
+      strength = 'strong';
+      color = 'bg-emerald-500';
+    } else if (passedChecks >= 4) {
+      strength = 'good';
+      color = 'bg-emerald-400';
+    } else if (passedChecks >= 3) {
+      strength = 'fair';
+      color = 'bg-yellow-500';
+    }
+    
+    return { checks, passedChecks, strength, color, percentage: (passedChecks / 5) * 100 };
+  };
+
+  const passwordStrength = getPasswordStrength(password);
+
   // Auto-generate username when name or mobile changes (real-time)
   useEffect(() => {
     if (mode === 'signup' && !usernameManuallyEdited) {
@@ -274,7 +304,12 @@ export default function Auth() {
                           onChange={e => {
                             const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
                             setUsername(value);
-                            setUsernameManuallyEdited(true);
+                            if (value) {
+                              setUsernameManuallyEdited(true);
+                            } else {
+                              // Reset to auto-generate when cleared
+                              setUsernameManuallyEdited(false);
+                            }
                             setUsernameAvailable(null);
                           }}
                           maxLength={30}
@@ -359,6 +394,53 @@ export default function Auth() {
                     </Button>
                   </div>
                   {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+                  
+                  {/* Password Strength Indicator - only for signup */}
+                  {mode === 'signup' && password && (
+                    <div className="space-y-2">
+                      {/* Strength Bar */}
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full transition-all duration-300 ${passwordStrength.color}`}
+                            style={{ width: `${passwordStrength.percentage}%` }}
+                          />
+                        </div>
+                        <span className={`text-xs font-medium capitalize ${
+                          passwordStrength.strength === 'strong' ? 'text-emerald-500' :
+                          passwordStrength.strength === 'good' ? 'text-emerald-400' :
+                          passwordStrength.strength === 'fair' ? 'text-yellow-500' :
+                          'text-destructive'
+                        }`}>
+                          {passwordStrength.strength}
+                        </span>
+                      </div>
+                      
+                      {/* Requirements Checklist */}
+                      <div className="grid grid-cols-2 gap-1 text-xs">
+                        <div className={`flex items-center gap-1 ${passwordStrength.checks.minLength ? 'text-emerald-500' : 'text-muted-foreground'}`}>
+                          {passwordStrength.checks.minLength ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                          <span>6+ characters</span>
+                        </div>
+                        <div className={`flex items-center gap-1 ${passwordStrength.checks.hasUppercase ? 'text-emerald-500' : 'text-muted-foreground'}`}>
+                          {passwordStrength.checks.hasUppercase ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                          <span>Uppercase letter</span>
+                        </div>
+                        <div className={`flex items-center gap-1 ${passwordStrength.checks.hasLowercase ? 'text-emerald-500' : 'text-muted-foreground'}`}>
+                          {passwordStrength.checks.hasLowercase ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                          <span>Lowercase letter</span>
+                        </div>
+                        <div className={`flex items-center gap-1 ${passwordStrength.checks.hasNumber ? 'text-emerald-500' : 'text-muted-foreground'}`}>
+                          {passwordStrength.checks.hasNumber ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                          <span>Number</span>
+                        </div>
+                        <div className={`flex items-center gap-1 ${passwordStrength.checks.hasSpecial ? 'text-emerald-500' : 'text-muted-foreground'}`}>
+                          {passwordStrength.checks.hasSpecial ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                          <span>Special character</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Confirm Password (only for signup) */}
