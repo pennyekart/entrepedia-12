@@ -47,7 +47,7 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { action, mobile_number, password, full_name } = await req.json();
+    const { action, mobile_number, password, full_name, username } = await req.json();
 
     if (!mobile_number || !password) {
       return new Response(
@@ -57,9 +57,18 @@ serve(async (req) => {
     }
 
     if (action === "signup") {
-      if (!full_name) {
+      if (!full_name || !username) {
         return new Response(
-          JSON.stringify({ error: "Full name is required for signup" }),
+          JSON.stringify({ error: "Full name and username are required for signup" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Validate username format
+      const usernameRegex = /^[a-zA-Z0-9_]{3,30}$/;
+      if (!usernameRegex.test(username)) {
+        return new Response(
+          JSON.stringify({ error: "Username must be 3-30 characters and only contain letters, numbers, and underscores" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -74,6 +83,20 @@ serve(async (req) => {
       if (existingUser) {
         return new Response(
           JSON.stringify({ error: "This mobile number is already registered" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Check if username already exists
+      const { data: existingUsername } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", username.toLowerCase())
+        .maybeSingle();
+
+      if (existingUsername) {
+        return new Response(
+          JSON.stringify({ error: "This username is already taken" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -105,7 +128,7 @@ serve(async (req) => {
           id: credentials.id,
           full_name,
           mobile_number,
-          username: mobile_number,
+          username: username.toLowerCase(),
         });
 
       if (profileError) {

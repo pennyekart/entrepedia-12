@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, Phone, Lock, User, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Phone, Lock, User, ArrowLeft, AtSign, Check, X, Loader2 } from 'lucide-react';
 import { z } from 'zod';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,6 +19,10 @@ const phoneSchema = z.string().min(1, 'Mobile number is required').refine(
 );
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 const nameSchema = z.string().min(2, 'Name must be at least 2 characters');
+const usernameSchema = z.string()
+  .min(3, 'Username must be at least 3 characters')
+  .max(30, 'Username must be less than 30 characters')
+  .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores');
 
 export default function Auth() {
   const [searchParams] = useSearchParams();
@@ -28,6 +32,9 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
   
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -55,6 +62,52 @@ export default function Auth() {
     return !!data && !error;
   };
 
+  const generateUsername = (name: string, mobile: string): string => {
+    const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
+    const lastFourDigits = mobile.slice(-4);
+    return cleanName ? `${cleanName}${lastFourDigits}` : '';
+  };
+
+  // Auto-generate username when name or mobile changes
+  useEffect(() => {
+    if (mode === 'signup' && fullName && mobileNumber.length >= 4) {
+      const generatedUsername = generateUsername(fullName, mobileNumber);
+      if (!username || username === generateUsername(fullName.slice(0, -1), mobileNumber) || 
+          username === generateUsername(fullName, mobileNumber.slice(0, -1))) {
+        setUsername(generatedUsername);
+        setUsernameAvailable(null);
+      }
+    }
+  }, [fullName, mobileNumber, mode]);
+
+  const checkUsernameAvailability = async (usernameToCheck: string) => {
+    if (!usernameToCheck || usernameToCheck.length < 3) {
+      setUsernameAvailable(null);
+      return;
+    }
+
+    const validationResult = usernameSchema.safeParse(usernameToCheck);
+    if (!validationResult.success) {
+      setUsernameAvailable(null);
+      return;
+    }
+
+    setCheckingUsername(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', usernameToCheck)
+        .maybeSingle();
+      
+      setUsernameAvailable(!data && !error);
+    } catch {
+      setUsernameAvailable(null);
+    } finally {
+      setCheckingUsername(false);
+    }
+  };
+
   const validate = async () => {
     const newErrors: Record<string, string> = {};
 
@@ -75,6 +128,16 @@ export default function Auth() {
       const nameResult = nameSchema.safeParse(fullName);
       if (!nameResult.success) {
         newErrors.fullName = nameResult.error.errors[0].message;
+      }
+
+      // Validate username
+      const usernameResult = usernameSchema.safeParse(username);
+      if (!usernameResult.success) {
+        newErrors.username = usernameResult.error.errors[0].message;
+      } else if (usernameAvailable === false) {
+        newErrors.username = 'This username is already taken';
+      } else if (usernameAvailable === null) {
+        newErrors.username = 'Please check username availability';
       }
 
       // Validate confirm password
@@ -121,7 +184,7 @@ export default function Auth() {
           });
         }
       } else {
-        const { error } = await signUpWithMobile(mobileNumber, password, fullName);
+        const { error } = await signUpWithMobile(mobileNumber, password, fullName, username);
         if (error) {
           toast({
             title: 'Sign up failed',
@@ -195,6 +258,61 @@ export default function Auth() {
                       />
                     </div>
                     {errors.fullName && <p className="text-sm text-destructive">{errors.fullName}</p>}
+                  </div>
+                )}
+
+                {/* Username - only for signup */}
+                {mode === 'signup' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="username">Username (User ID)</Label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                          id="username" 
+                          placeholder="Choose a unique username" 
+                          className="pl-10 pr-10" 
+                          value={username} 
+                          onChange={e => {
+                            const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+                            setUsername(value);
+                            setUsernameAvailable(null);
+                          }}
+                          maxLength={30}
+                        />
+                        {username.length >= 3 && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            {checkingUsername ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            ) : usernameAvailable === true ? (
+                              <Check className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
+                            ) : usernameAvailable === false ? (
+                              <X className="h-4 w-4 text-destructive" />
+                            ) : null}
+                          </div>
+                        )}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={!username || username.length < 3 || checkingUsername}
+                        onClick={() => checkUsernameAvailability(username)}
+                        className="shrink-0"
+                      >
+                        {checkingUsername ? 'Checking...' : 'Check'}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Auto-generated from your name + last 4 digits of mobile. You can customize it.
+                    </p>
+                    {errors.username && <p className="text-sm text-destructive">{errors.username}</p>}
+                    {usernameAvailable === true && !errors.username && (
+                      <p className="text-sm text-emerald-600 dark:text-emerald-400">Username is available!</p>
+                    )}
+                    {usernameAvailable === false && (
+                      <p className="text-sm text-destructive">Username is already taken. Try another.</p>
+                    )}
                   </div>
                 )}
 
