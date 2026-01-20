@@ -10,6 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -369,6 +370,7 @@ export default function Messages() {
                   <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                       <DialogTitle>Start a New Chat</DialogTitle>
+                      <DialogDescription>Select someone from your following list to start a conversation.</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 pt-2">
                       <div className="relative">

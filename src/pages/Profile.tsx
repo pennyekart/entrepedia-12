@@ -12,6 +12,7 @@ import { VerificationBadge } from '@/components/ui/verification-badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { getOrCreateConversation } from '@/hooks/useMessaging';
 import { 
   MapPin, 
   Calendar, 
@@ -221,14 +222,20 @@ export default function Profile() {
     }
 
     try {
-      const { data: conversationId } = await supabase
-        .rpc('get_or_create_conversation', { other_user_id: profileId });
+      const { data, error } = await getOrCreateConversation(profileId);
 
-      if (conversationId) {
-        navigate(`/messages/${conversationId}`);
+      if (error) {
+        console.error('Error starting conversation:', error);
+        toast({ title: 'Error starting conversation', variant: 'destructive' });
+        return;
+      }
+
+      if (data?.conversation_id) {
+        navigate(`/messages/${data.conversation_id}`);
       }
     } catch (error) {
       console.error('Error starting conversation:', error);
+      toast({ title: 'Error starting conversation', variant: 'destructive' });
     }
   };
 
