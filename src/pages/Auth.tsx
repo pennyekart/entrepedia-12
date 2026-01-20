@@ -136,7 +136,7 @@ export default function Auth() {
     }
   };
 
-  const validate = async () => {
+  const validate = async (finalUsername: string) => {
     const newErrors: Record<string, string> = {};
 
     // Validate mobile number
@@ -158,14 +158,21 @@ export default function Auth() {
         newErrors.fullName = nameResult.error.errors[0].message;
       }
 
-      // Validate username
-      const usernameResult = usernameSchema.safeParse(username);
+      // Validate username (using the finalUsername which is auto-filled if blank)
+      const usernameResult = usernameSchema.safeParse(finalUsername);
       if (!usernameResult.success) {
         newErrors.username = usernameResult.error.errors[0].message;
-      } else if (usernameAvailable === false) {
-        newErrors.username = 'This username is already taken';
-      } else if (usernameAvailable === null) {
-        newErrors.username = 'Please check username availability';
+      } else {
+        // Check availability for the final username
+        const { data } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', finalUsername)
+          .maybeSingle();
+        
+        if (data) {
+          newErrors.username = 'This username is already taken';
+        }
       }
 
       // Validate confirm password
@@ -196,7 +203,14 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      const isValid = await validate();
+      // Auto-fill username if blank
+      let finalUsername = username;
+      if (mode === 'signup' && !username.trim()) {
+        finalUsername = generateUsername(fullName, mobileNumber);
+        setUsername(finalUsername);
+      }
+
+      const isValid = await validate(finalUsername);
       if (!isValid) {
         setLoading(false);
         return;
@@ -212,7 +226,7 @@ export default function Auth() {
           });
         }
       } else {
-        const { error } = await signUpWithMobile(mobileNumber, password, fullName, username);
+        const { error } = await signUpWithMobile(mobileNumber, password, fullName, finalUsername);
         if (error) {
           toast({
             title: 'Sign up failed',
