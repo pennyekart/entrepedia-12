@@ -489,7 +489,7 @@ export default function CommunityDetail() {
                                 · {formatDistanceToNow(new Date(discussion.created_at), { addSuffix: true })}
                               </span>
                             </div>
-                            {user?.id === discussion.user_id && (
+                            {(user?.id === discussion.user_id || isCreator) && (
                               <Button
                                 variant="ghost"
                                 size="icon"

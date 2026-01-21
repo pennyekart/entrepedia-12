@@ -252,12 +252,46 @@ Deno.serve(async (req) => {
         );
       }
 
-      // User can only delete their own discussions
+      // Fetch discussion to get community_id and user_id
+      const { data: discussion, error: fetchError } = await supabase
+        .from("community_discussions")
+        .select("id, user_id, community_id")
+        .eq("id", discussion_id)
+        .maybeSingle();
+
+      if (fetchError || !discussion) {
+        return new Response(
+          JSON.stringify({ error: "Discussion not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Check if user is the discussion owner
+      const isOwner = discussion.user_id === userId;
+
+      // Check if user is community creator (admin)
+      let isAdmin = false;
+      if (!isOwner) {
+        const { data: community } = await supabase
+          .from("communities")
+          .select("created_by")
+          .eq("id", discussion.community_id)
+          .maybeSingle();
+
+        isAdmin = community?.created_by === userId;
+      }
+
+      if (!isOwner && !isAdmin) {
+        return new Response(
+          JSON.stringify({ error: "Not authorized to delete this discussion" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       const { error: deleteDiscussionError } = await supabase
         .from("community_discussions")
         .delete()
-        .eq("id", discussion_id)
-        .eq("user_id", userId);
+        .eq("id", discussion_id);
 
       if (deleteDiscussionError) {
         console.error("Delete discussion error:", deleteDiscussionError);
