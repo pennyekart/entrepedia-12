@@ -324,8 +324,6 @@ Deno.serve(async (req) => {
 
     // REMOVE MEMBER (admin only)
     if (action === "remove_member") {
-      const { member_user_id } = await req.json().catch(() => ({}));
-      
       if (!community_id) {
         return new Response(
           JSON.stringify({ error: "Community ID is required" }),
