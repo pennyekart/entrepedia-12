@@ -74,6 +74,9 @@ export default function AdminLogin() {
         return;
       }
 
+      // Sync email from Supabase Auth to profile (fires trigger to assign role)
+      await supabase.rpc('sync_profile_email_from_jwt');
+
       // Check if user has admin role
       const { data: roles, error: rolesError } = await supabase
         .from('user_roles')

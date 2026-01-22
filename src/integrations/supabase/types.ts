@@ -1429,6 +1429,7 @@ export type Database = {
       }
       is_following: { Args: { target_user_id: string }; Returns: boolean }
       refresh_session: { Args: { p_session_token: string }; Returns: boolean }
+      sync_profile_email_from_jwt: { Args: never; Returns: undefined }
       validate_session: { Args: { p_session_token: string }; Returns: string }
     }
     Enums: {
