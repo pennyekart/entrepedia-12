@@ -54,7 +54,7 @@ export function TrendingPosts() {
           post_likes (id),
           comments (id)
         `)
-        .eq('is_hidden', false)
+        .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(50);
 

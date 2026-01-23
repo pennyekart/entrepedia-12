@@ -955,6 +955,7 @@ export type Database = {
           is_featured: boolean | null
           is_hidden: boolean | null
           report_count: number | null
+          status: string | null
           updated_at: string | null
           user_id: string | null
           youtube_url: string | null
@@ -971,6 +972,7 @@ export type Database = {
           is_featured?: boolean | null
           is_hidden?: boolean | null
           report_count?: number | null
+          status?: string | null
           updated_at?: string | null
           user_id?: string | null
           youtube_url?: string | null
@@ -987,6 +989,7 @@ export type Database = {
           is_featured?: boolean | null
           is_hidden?: boolean | null
           report_count?: number | null
+          status?: string | null
           updated_at?: string | null
           user_id?: string | null
           youtube_url?: string | null

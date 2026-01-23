@@ -49,6 +49,8 @@ interface Post {
   created_at: string;
   user_id: string;
   business_id: string | null;
+  status: string | null;
+  hidden_reason: string | null;
   profiles: {
     id: string;
     full_name: string | null;
@@ -107,8 +109,8 @@ export default function Profile() {
       if (profileError) throw profileError;
       setProfileData(profile);
 
-      // Fetch posts
-      const { data: postsData } = await supabase
+      // Fetch posts - for own profile show all posts, for others only active
+      let postsQuery = supabase
         .from('posts')
         .select(`
           *,
@@ -120,6 +122,12 @@ export default function Profile() {
         .eq('user_id', profileId)
         .order('created_at', { ascending: false });
 
+      // Only filter by status if viewing someone else's profile
+      if (!isOwnProfile) {
+        postsQuery = postsQuery.eq('status', 'active');
+      }
+
+      const { data: postsData } = await postsQuery;
       setPosts(postsData || []);
 
       // Fetch followers

@@ -34,6 +34,8 @@ interface Post {
   youtube_url: string | null;
   is_hidden: boolean | null;
   is_featured: boolean | null;
+  status: string | null;
+  hidden_reason: string | null;
   created_at: string | null;
   user_id: string | null;
   business_id: string | null;
@@ -205,10 +207,10 @@ export default function AdminPosts() {
       header: 'Status',
       render: (post) => (
         <div className="flex flex-wrap gap-1">
-          {post.is_hidden ? (
+          {post.status === 'hidden' ? (
             <Badge variant="destructive">Hidden</Badge>
           ) : (
-            <Badge className="bg-green-500">Visible</Badge>
+            <Badge className="bg-green-500">Active</Badge>
           )}
           {post.is_featured && (
             <Badge className="bg-yellow-500">
@@ -257,7 +259,7 @@ export default function AdminPosts() {
                 setActionDialog('hide');
               }}
             >
-              {post.is_hidden ? (
+              {post.status === 'hidden' ? (
                 <>
                   <Eye className="h-4 w-4 mr-2" />
                   Show Post
@@ -310,7 +312,7 @@ export default function AdminPosts() {
             key: 'status',
             label: 'Status',
             options: [
-              { value: 'visible', label: 'Visible' },
+              { value: 'active', label: 'Active' },
               { value: 'hidden', label: 'Hidden' },
               { value: 'featured', label: 'Featured' },
             ],
@@ -323,12 +325,12 @@ export default function AdminPosts() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {selectedPost?.is_hidden ? 'Show Post' : 'Hide Post'}
+              {selectedPost?.status === 'hidden' ? 'Show Post' : 'Hide Post'}
             </DialogTitle>
             <DialogDescription>
-              {selectedPost?.is_hidden 
-                ? 'This will make the post visible again.'
-                : 'This will hide the post from public view.'}
+              {selectedPost?.status === 'hidden' 
+                ? 'This will make the post visible again (status: active).'
+                : 'This will hide the post from public view. The author can still see it in their profile with a notice.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -338,7 +340,7 @@ export default function AdminPosts() {
                 {selectedPost?.content || '[No text content]'}
               </p>
             </div>
-            {!selectedPost?.is_hidden && (
+            {selectedPost?.status !== 'hidden' && (
               <div>
                 <Label htmlFor="reason">Reason</Label>
                 <Textarea
@@ -355,14 +357,14 @@ export default function AdminPosts() {
               Cancel
             </Button>
             <Button
-              variant={selectedPost?.is_hidden ? 'default' : 'destructive'}
+              variant={selectedPost?.status === 'hidden' ? 'default' : 'destructive'}
               onClick={() => selectedPost && hideMutation.mutate({ 
                 postId: selectedPost.id, 
-                hide: !selectedPost.is_hidden 
+                hide: selectedPost.status !== 'hidden' 
               })}
               disabled={hideMutation.isPending}
             >
-              {selectedPost?.is_hidden ? 'Show' : 'Hide'}
+              {selectedPost?.status === 'hidden' ? 'Show' : 'Hide'}
             </Button>
           </DialogFooter>
         </DialogContent>

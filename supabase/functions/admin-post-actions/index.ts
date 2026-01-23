@@ -59,7 +59,8 @@ serve(async (req) => {
         .update({
           is_hidden: true,
           hidden_at: new Date().toISOString(),
-          hidden_reason: reason || "Hidden by admin due to report",
+          hidden_reason: reason || "Hidden by admin",
+          status: "hidden",
         })
         .eq("id", post_id);
 
@@ -77,7 +78,7 @@ serve(async (req) => {
         action: "hide_post",
         target_type: "post",
         target_id: post_id,
-        details: { reason: reason || "Hidden by admin due to report" },
+        details: { reason: reason || "Hidden by admin" },
       });
 
       return new Response(
@@ -159,6 +160,7 @@ serve(async (req) => {
           is_hidden: false,
           hidden_at: null,
           hidden_reason: null,
+          status: "active",
         })
         .eq("id", post_id);
 

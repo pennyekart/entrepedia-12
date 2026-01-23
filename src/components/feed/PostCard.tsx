@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
-import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal, Flag } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal, Flag, AlertTriangle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -49,6 +49,8 @@ interface PostCardProps {
     instagram_url: string | null;
     created_at: string;
     user_id: string;
+    status?: string | null;
+    hidden_reason?: string | null;
     profiles: {
       id: string;
       full_name: string | null;
@@ -234,8 +236,20 @@ export function PostCard({ post, onUpdate }: PostCardProps) {
     ? `/business/${post.businesses.id}` 
     : `/user/${post.profiles?.id}`;
 
+  const isHiddenByAdmin = post.status === 'hidden';
+
   return (
-    <Card className="overflow-hidden card-hover border-0 shadow-soft">
+    <Card className={cn("overflow-hidden card-hover border-0 shadow-soft", isHiddenByAdmin && "border-2 border-destructive/30 bg-destructive/5")}>
+      {/* Admin Hidden Notice */}
+      {isHiddenByAdmin && (
+        <div className="bg-destructive/10 border-b border-destructive/20 px-4 py-3 flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-destructive" />
+          <p className="text-sm text-destructive font-medium">
+            This post has been hidden by admin
+            {post.hidden_reason && `: ${post.hidden_reason}`}
+          </p>
+        </div>
+      )}
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <Link to={profileLink} className="flex items-center gap-3">
