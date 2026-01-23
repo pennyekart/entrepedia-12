@@ -32,35 +32,47 @@ export function useAdminAuthSupabase(): AdminAuthState {
       try {
         const stored = localStorage.getItem(ADMIN_STORAGE_KEY);
         if (stored) {
-          const { user: storedUser, session_token, roles: storedRoles } = JSON.parse(stored);
+          const { user: storedUser, session_token } = JSON.parse(stored);
           
           if (storedUser && session_token) {
-            // Validate session token against DB
-            const { data: validatedUserId, error: validateError } = await supabase
-              .rpc('validate_session', { p_session_token: session_token });
+            // IMPORTANT: Admin panel uses a custom session token (not supabase.auth).
+            // We must validate roles via a server-side check (edge function w/ service role)
+            // instead of querying user_roles from the browser (RLS will block it).
+            const res = await supabase.functions.invoke('mobile-auth', {
+              body: {
+                action: 'admin_validate',
+                session_token,
+              },
+            });
 
-            if (validateError || !validatedUserId) {
+            const data = res.data as any;
+
+            if (res.error || !data?.success) {
               console.warn('Admin session token is invalid/expired. Clearing session.');
               localStorage.removeItem(ADMIN_STORAGE_KEY);
               setUser(null);
               setRoles([]);
-            } else {
-              // Re-verify admin roles from DB
-              const { data: currentRoles, error: rolesError } = await supabase
-                .from('user_roles')
-                .select('role')
-                .eq('user_id', storedUser.id);
-
-              if (rolesError || !currentRoles || currentRoles.length === 0) {
-                console.warn('User no longer has admin roles. Clearing session.');
-                localStorage.removeItem(ADMIN_STORAGE_KEY);
-                setUser(null);
-                setRoles([]);
-              } else {
-                setUser(storedUser);
-                setRoles(currentRoles.map(r => r.role as AdminRole));
-              }
+              return;
             }
+
+            const validatedRoles = (data.roles || []) as AdminRole[];
+            const validatedUser = (data.user || storedUser) as AdminUser;
+
+            if (!validatedRoles.length) {
+              console.warn('User no longer has admin roles. Clearing session.');
+              localStorage.removeItem(ADMIN_STORAGE_KEY);
+              setUser(null);
+              setRoles([]);
+              return;
+            }
+
+            // Keep storage in sync with server
+            localStorage.setItem(
+              ADMIN_STORAGE_KEY,
+              JSON.stringify({ user: validatedUser, session_token, roles: validatedRoles })
+            );
+            setUser(validatedUser);
+            setRoles(validatedRoles);
           }
         }
       } catch (error) {

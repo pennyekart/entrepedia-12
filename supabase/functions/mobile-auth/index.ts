@@ -47,8 +47,81 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { action, mobile_number, password, full_name, username, date_of_birth } = await req.json();
+    const body = await req.json();
+    const {
+      action,
+      mobile_number,
+      password,
+      full_name,
+      username,
+      date_of_birth,
+      session_token,
+    } = body ?? {};
 
+    // Admin session validation (used by the admin panel route guard)
+    if (action === "admin_validate") {
+      if (!session_token) {
+        return new Response(
+          JSON.stringify({ error: "Session token is required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { data: sessionRow, error: sessionErr } = await supabase
+        .from("user_sessions")
+        .select("user_id, expires_at, is_active")
+        .eq("session_token", session_token)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (sessionErr || !sessionRow) {
+        return new Response(
+          JSON.stringify({ error: "Invalid or expired session" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const expiresAt = new Date(sessionRow.expires_at);
+      if (Number.isNaN(expiresAt.getTime()) || expiresAt.getTime() <= Date.now()) {
+        return new Response(
+          JSON.stringify({ error: "Invalid or expired session" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const userId = sessionRow.user_id;
+
+      const [{ data: profile, error: profileError }, { data: userRoles, error: rolesError }] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", userId),
+      ]);
+
+      if (profileError || !profile) {
+        return new Response(
+          JSON.stringify({ error: "Profile not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (rolesError) {
+        console.error("Admin roles lookup error:", rolesError);
+        return new Response(
+          JSON.stringify({ error: "Failed to validate roles" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          user: profile,
+          roles: userRoles?.map((r) => r.role) || [],
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Mobile auth requires mobile_number + password
     if (!mobile_number || !password) {
       return new Response(
         JSON.stringify({ error: "Mobile number and password are required" }),
